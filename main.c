@@ -42,7 +42,7 @@
 // 0x75,0x00,0x4e,0x3a,0x37,0x3a,0x46 },/* 0x01 ? */
 
 
-int checkgit=46;
+int checkgit = 46;
 
 char data[8][16] = {
     {0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},
@@ -89,8 +89,8 @@ int main(int argc, char** argv) {
     int count = 0;
     makefig(0, 8, 2, 1);
 
-    
-    while(1){
+
+    while (1) {
         LATD = 0x00;
         LATA = 0x00;
         LATE2 = 0;
@@ -98,16 +98,17 @@ int main(int argc, char** argv) {
         LATE1 = 0;
         trans(0);
         __delay_us(300);
-        for(int i=0; i<15; i++){
+        LATE2 = 1;
+        for (int i = 0; i < 15; i++) {
             LATD = 0x00;
             LATA = 0x00;
             LATE1 = 1;
             LATE1 = 0;
-            trans(i+1);
+            trans(i + 1);
             __delay_us(300);
         }
     }
-    
+
     while (1) {
         LATD = 0x00;
         LATA = 0x00;
@@ -120,7 +121,7 @@ int main(int argc, char** argv) {
         if (count % 150 == 0) {
             makefig(count / 150 - 1, 8, 2, 0);
             makefig(count / 150, 8, 2, 1);
-            if(count/150>17)count=0;
+            if (count / 150 > 17)count = 0;
         }
         LATE2 = 1;
         for (char i = 0; i < 15; i++) {
