@@ -89,6 +89,25 @@ int main(int argc, char** argv) {
     int count = 0;
     makefig(0, 8, 2, 1);
 
+    
+    while(1){
+        LATD = 0x00;
+        LATA = 0x00;
+        LATE2 = 0;
+        LATE1 = 1;
+        LATE1 = 0;
+        trans(0);
+        __delay_us(300);
+        for(int i=0; i<15; i++){
+            LATD = 0x00;
+            LATA = 0x00;
+            LATE1 = 1;
+            LATE1 = 0;
+            trans(i+1);
+            __delay_us(300);
+        }
+    }
+    
     while (1) {
         LATD = 0x00;
         LATA = 0x00;
