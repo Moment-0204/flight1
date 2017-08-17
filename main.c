@@ -7,6 +7,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "skADXL345I2C.h"
+#include "skI2Cmaster.h"
+#include <math.h>
 #define _XTAL_FREQ 32000000
 
 // PIC16F1939 Configuration Bit Settings
@@ -42,7 +45,28 @@
 // 0x75,0x00,0x4e,0x3a,0x37,0x3a,0x46 },/* 0x01 ? */
 
 
-int checkgit = 460;
+int Xangle, Yangle;
+
+void accele() {
+    int x1, y1, z1, x2, y2, z2, x, y, z;
+
+    x1 = 0;
+    y1 = 0;
+    z1 = 0;
+    for (int lcoun = 0; lcoun < 10; lcoun++) {
+        acceler_Read(&x, &y, &z);
+        x1 += x;
+        y1 += y;
+        z1 += z;
+    }
+    x2 = x1 / 10;
+    y2 = y1 / 10;
+    z2 = z1 / 10;
+
+
+    Xangle = (int) (atan2(x2 + 10, z2 - 4) / 3.14159 * 180.0); // X方向
+    Yangle = (int) (atan2(y2 - 5, z2 - 4) / 3.14159 * 180.0); // Y方向
+}
 
 char map[18][18];
 
@@ -56,8 +80,31 @@ void posh(char, char, int, char);
 /*
  * 
  */
+
+void interrupt intertimer() {
+    if (SSPIF == 1) {
+        if (AckCheck == 1) AckCheck = 0;
+        SSPIF = 0; // ？t？？？O？N？？？A
+    } else if (BCLIF == 1) {
+        BCLIF = 0;
+    } else if (T0IF == 1) {
+
+        T0IF = 0;
+    }
+}
+
 int main(int argc, char** argv) {
     setup();
+    OPTION_REG = 0b00000111;
+    TMR0 = 0;
+    T0IF = 0;
+    T0IE = 1;
+    GIE = 1;
+    InitI2C_Master2();
+    acceler_Init();
+    accele();
+
+
     for (char i = 0; i < 18; i++) {
         for (char j = 0; j < 18; j++) {
             map[i][j] = 0;
@@ -70,7 +117,7 @@ int main(int argc, char** argv) {
 
     while (1) {
         show(0, 0);
-        posh(1,1,460,1);
+        posh(2, 2, 460, 1);
     }
     return (EXIT_SUCCESS);
 }
@@ -81,7 +128,7 @@ void setup() {
     ANSELB = 0x00;
     TRISA = 0x00;
     TRISB = 0x00;
-    TRISC = 0x00;
+    TRISC = 0b00011000;
     TRISD = 0x00;
     TRISE = 0x00;
 }
