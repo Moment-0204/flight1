@@ -73,10 +73,12 @@ char map[27][27];
 
 void show(char, char);
 void setup();
-void mapcopy(char, char);
+//void mapcopy(char, char);
 //void trans(char);
 void makefig(char, char, char, char);
 void posh(char, char, int, char);
+char Map(char, char, char, char);
+int mapcopy(char, char);
 
 /*
  * 
@@ -84,6 +86,7 @@ void posh(char, char, int, char);
 
 char di = 0, dj = 0;
 int fx, fz;
+int m;
 
 void interrupt intertimer() {
     if (SSPIF == 1) {
@@ -92,10 +95,14 @@ void interrupt intertimer() {
     } else if (BCLIF == 1) {
         BCLIF = 0;
     } else if (T0IF == 1) {
-        if (Xangle > fx - 3 && di != 0)di--;
-        else if (Xangle < fx + 3 && di != 2)di++;
-        if (Zangle > fz - 3 && dj != 2)dj++;
-        else if (Zangle < fz + 3 && dj != 0)dj--;
+        m = (m + 1) % 5;
+        if (m == 0) {
+            char th = 40;
+            if (Xangle > fx - th && di != 0)di--;
+            else if (Xangle < fx + th && di != 38)di++;
+            if (Zangle > fz - th && dj != 38)dj++;
+            else if (Zangle < fz + th && dj != 0)dj--;
+        }
         T0IF = 0;
     }
 }
@@ -105,7 +112,7 @@ int main(int argc, char** argv) {
     OPTION_REG = 0b00000111;
     TMR0 = 0;
     T0IF = 0;
-    T0IE = 0;
+    T0IE = 1;
     GIE = 1;
     InitI2C_Master2();
     acceler_Init();
@@ -114,11 +121,17 @@ int main(int argc, char** argv) {
     fx = 0;
     fz = 0;
 
-    for (char i = 0; i < 18; i++) {
-        for (char j = 0; j < 18; j++) {
-            map[i][j] = 0;
-        }
+    for (char i = 0; i < 27; i++)for (char j = 0; j < 27; j++)map[i][j] = 0;
+    for (char i = 0; i < 27; i++) {
+        map[i][0] = 17;
+        map[i][26] = 68;
+        map[0][i] = 5;
+        map[26][i] = 80;
     }
+    map[0][0] = 21;
+    map[26][26] = 84;
+    map[0][26] = 69;
+    map[26][0] = 85;
 
     int figure = 0;
 
@@ -127,16 +140,16 @@ int main(int argc, char** argv) {
     int prexangle = 0;
 
 
-    //makefig(8, 8, 8, 1);
+    makefig(7, 7, 8, 1);
+    makefig(46, 46, 3, 1);
 
     while (1) {
         count = (count + 1) % 10;
         if (count == 0)accele();
-        posh(1, 1, 100, 1);
         int wait = 1;
-        show(di,dj);
+        show(di, dj);
     }
-    return (EXIT_SUCCESS);
+    return 1;
 }
 
 void setup() {
@@ -150,7 +163,7 @@ void setup() {
     TRISE = 0x00;
 }
 
-void show(char num1, char num2) {
+void show1(char num1, char num2) {
     LATD = 0x00;
     LATA = 0x00;
     LATE2 = 0;
@@ -159,7 +172,7 @@ void show(char num1, char num2) {
     mapcopy(num1, num2);
     __delay_us(300);
     LATE2 = 1;
-    for (char i = 1; i < 16; i++) {
+    for (char i = 1; i < 27; i++) {
         LATD = 0x00;
         LATA = 0x00;
         LATE1 = 1;
@@ -169,7 +182,45 @@ void show(char num1, char num2) {
     }
 }
 
-void mapcopy(char num1, char num2) {
+void show(char num1, char num2) {
+    int dataa;
+    LATD = 0x00;
+    LATA = 0x00;
+    LATE2 = 0;
+    LATE1 = 1;
+    LATE1 = 0;
+    dataa = mapcopy(num1, num2);
+    LATA = dataa / 256;
+    LATD = dataa % 256;
+    __delay_us(50);
+    LATE2 = 1;
+    dataa = mapcopy(num1, num2 + 1);
+    for (char i = 1; i < 16; i++) {
+        LATD = 0x00;
+        LATA = 0x00;
+        LATE1 = 1;
+        LATE1 = 0;
+        LATA = dataa / 256;
+        LATD = dataa % 256;
+        if (i != 15)dataa = mapcopy(num1, num2 + i + 1);
+        __delay_us(50);
+    }
+}
+
+int mapcopy(char num1, char num2) {
+    char datatempa = 0;
+    char datatemp = 0;
+    datatemp = Map(num1 + 7, num2, map[(num1 + 7) / 2 ][num2 / 2 ], 1);
+    datatempa = Map(num1 + 15, num2, map[(num1 + 15) / 2 ][num2 / 2 ], 1);
+    for (char i = 7; i > 0; i--) {
+        datatemp = datatemp * 2 + Map(num1 + i - 1, num2, map[(num1 + i - 1) / 2][num2 / 2], 1);
+        datatempa = datatempa * 2 + Map(num1 + i + 7, num2, map[(num1 + i + 7) / 2][num2 / 2], 1);
+    }
+
+    return datatempa *256 + datatemp;
+}
+
+void mapcopy1(char num1, char num2) {
     char datatempa = 0;
     char datatemp = 0;
     datatemp = map[num1 + 7][num2];
@@ -190,7 +241,7 @@ void posh(char num1, char num2, int point, char mode) {
     makefig(num1, num2 + 8, point % 10, mode);
 }
 
-void makefig(char num1, char num2, char figure, char mode) {
+void makefig1(char num1, char num2, char figure, char mode) {
     switch (figure) {
         case 1:
             map[num1][num2 + 1] = mode;
@@ -318,21 +369,11 @@ void makefig(char num1, char num2, char figure, char mode) {
     }
 }
 
-/*void mapcopy(char num1][ char num2) {
-    char datatempa = 0;
-    char datatemp = 0;
-    datatemp = Map(num1 + 7, num2, map[(num1 + 7) / 2 + 1][num2 / 2 + 1], 1);
-    datatempa = Map(num1 + 15, num2, map[(num1 + 15) / 2 + 1][num2 / 2 + 1], 1);
-    for (char i = 7; i > 0; i--) {
-        datatemp = datatemp * 2 + Map(num1 + i - 1, num2, map[(num1 + i - 1) / 2 + 1][num2 / 2 + 1], 1);
-        datatempa = datatempa * 2 + Map(num1 + i + 7, num2, map[(num1 + i + 7) / 2 + 1][num2 / 2 + 1], 1);
-    }
+//*
 
-    LATD = datatemp;
-    LATA = datatempa;
-}*/
+//*
 
-/*void makefig(char num1, char num2, char figure, char mode) {
+void makefig(char num1, char num2, char figure, char mode) {
     switch (figure) {
         case 1:
             Map(num1, num2 + 1, mode, 0);
@@ -460,7 +501,7 @@ void makefig(char num1, char num2, char figure, char mode) {
             Map(num1 + 4, num2 + 2, mode, 0);
             break;
     }
-}/*
+}
 
 /*
 void trans(char num) {
@@ -522,7 +563,7 @@ char data_moment[8][16] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };*/
 
-/*char Map(char num1, char num2, char num, char mode) {
+char Map(char num1, char num2, char num, char mode) {
     if (mode == 1) {
         char te = num;
         if (num1 % 2 == 1 && num2 % 2 == 1)return te >> 6;
@@ -535,4 +576,4 @@ char data_moment[8][16] = {
         else if (num1 % 2 == 0 && num2 % 2 == 1)map[num1 / 2 + 1][num2 / 2 + 1] += num << 2;
         else if (num1 % 2 == 0 && num2 % 2 == 0)map[num1 / 2 + 1][num2 / 2 + 1] += num;
     }
-}*/
+}
