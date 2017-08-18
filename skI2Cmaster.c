@@ -25,10 +25,10 @@ int AckCheck=0;
 
 // ？A？C？h？？？？？？？？？`？F？b？N
 // ACKEN RCEN PEN RSEN SEN R/W BF ？？？S？？？O？？？？？n？j
-void I2C_IdleCheck2(char mask)
+/*void I2C_IdleCheck2(char mask)
 {
      while (( I2C_SSPCON2 & 0x1F ) | (I2C_SSPSTAT & mask)) ;
-}
+}*/
 /*******************************************************************************
 *  interrupt InterI2C( void )                                                  *
 *    ？h？Q？b？？？A？？？？？？？？？？？？？？                                                  *
@@ -60,7 +60,7 @@ void InitI2C_Master2()
 *    buf  : ？？？M？？？？？f？[？^？？？i？[？？？？？z？？？？？w？？？？？？                             *
 *    ans  : 0=？？？？？@1=？X？？？[？u？？？？？？？？？？？？？@2=？？？？？？？f？[？^？？？？？M？？？？？？？？？？     *
 *******************************************************************************/
-int I2C_Send2(unsigned char adrs,int len,char *buf)
+/*int I2C_Send2(unsigned char adrs,int len,char *buf)
 {
      int i , ans ;
 
@@ -92,7 +92,7 @@ int I2C_Send2(unsigned char adrs,int len,char *buf)
      I2C_IdleCheck2(0x5) ;
      SSPCON2bits.PEN = 1 ;
      return ans ;
-}
+}*/
 /*******************************************************************************
 *  ans = I2C_Receive(adrs,len,buf)                                             *
 *    ？X？？？[？u？？？？？f？[？^？？？w？？？？？？？？？？(len)？？？？？？？M？？？？？？？？                     *
@@ -102,7 +102,7 @@ int I2C_Send2(unsigned char adrs,int len,char *buf)
 *    buf  : ？？？M？？？？？f？[？^？？？i？[？？？？？z？？？？？w？？？？？？                             *
 *    ans  : 0=？？？？？@1=？X？？？[？u？？？？？？？？？？？？                                     *
 *******************************************************************************/
-int I2C_Receive2(unsigned char adrs,int len,char *buf)
+/*int I2C_Receive2(unsigned char adrs,int len,char *buf)
 {
 	unsigned dt ;
      int i , ans ;
@@ -135,3 +135,4 @@ int I2C_Receive2(unsigned char adrs,int len,char *buf)
      SSPCON2bits.PEN = 1 ;
      return ans ;
 }
+*/

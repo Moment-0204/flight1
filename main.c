@@ -45,7 +45,7 @@
 // 0x75,0x00,0x4e,0x3a,0x37,0x3a,0x46 },/* 0x01 ? */
 
 
-int Xangle, Yangle;
+int Xangle, Yangle, Zangle;
 
 void accele() {
     int x1, y1, z1, x2, y2, z2, x, y, z;
@@ -66,9 +66,10 @@ void accele() {
 
     Xangle = (int) (atan2(x2 + 10, z2 - 4) / 3.14159 * 180.0); // X方向
     Yangle = (int) (atan2(y2 - 5, z2 - 4) / 3.14159 * 180.0); // Y方向
+    Zangle = (int) (atan2(z2 - 4, y2 - 5) / 3.14159 * 180.0); // Y方向
 }
 
-char map[18][18];
+char map[27][27];
 
 void show(char, char);
 void setup();
@@ -81,6 +82,9 @@ void posh(char, char, int, char);
  * 
  */
 
+char di = 0, dj = 0;
+int fx, fz;
+
 void interrupt intertimer() {
     if (SSPIF == 1) {
         if (AckCheck == 1) AckCheck = 0;
@@ -88,7 +92,10 @@ void interrupt intertimer() {
     } else if (BCLIF == 1) {
         BCLIF = 0;
     } else if (T0IF == 1) {
-
+        if (Xangle > fx - 3 && di != 0)di--;
+        else if (Xangle < fx + 3 && di != 2)di++;
+        if (Zangle > fz - 3 && dj != 2)dj++;
+        else if (Zangle < fz + 3 && dj != 0)dj--;
         T0IF = 0;
     }
 }
@@ -98,12 +105,14 @@ int main(int argc, char** argv) {
     OPTION_REG = 0b00000111;
     TMR0 = 0;
     T0IF = 0;
-    T0IE = 1;
+    T0IE = 0;
     GIE = 1;
     InitI2C_Master2();
     acceler_Init();
     accele();
 
+    fx = 0;
+    fz = 0;
 
     for (char i = 0; i < 18; i++) {
         for (char j = 0; j < 18; j++) {
@@ -114,10 +123,18 @@ int main(int argc, char** argv) {
     int figure = 0;
 
     int count = 0;
+    int preangle = 0;
+    int prexangle = 0;
+
+
+    //makefig(8, 8, 8, 1);
 
     while (1) {
-        show(0, 0);
-        posh(2, 2, 460, 1);
+        count = (count + 1) % 10;
+        if (count == 0)accele();
+        posh(1, 1, 100, 1);
+        int wait = 1;
+        show(di,dj);
     }
     return (EXIT_SUCCESS);
 }
@@ -140,7 +157,7 @@ void show(char num1, char num2) {
     LATE1 = 1;
     LATE1 = 0;
     mapcopy(num1, num2);
-    __delay_us(100);
+    __delay_us(300);
     LATE2 = 1;
     for (char i = 1; i < 16; i++) {
         LATD = 0x00;
@@ -148,7 +165,7 @@ void show(char num1, char num2) {
         LATE1 = 1;
         LATE1 = 0;
         mapcopy(num1, num2 + i);
-        __delay_us(100);
+        __delay_us(300);
     }
 }
 
@@ -167,6 +184,7 @@ void mapcopy(char num1, char num2) {
 }
 
 void posh(char num1, char num2, int point, char mode) {
+    if (point < 0)point = point*-1 + 200;
     if (point > 99)makefig(num1, num2, point / 100, mode);
     if (point > 9)makefig(num1, num2 + 4, (point % 100) / 10, mode);
     makefig(num1, num2 + 8, point % 10, mode);
@@ -186,9 +204,9 @@ void makefig(char num1, char num2, char figure, char mode) {
             map[num1][num2 + 1] = mode;
             map[num1][num2 + 2] = mode;
             map[num1 + 1][num2 + 2] = mode;
-            map[num1 + 2][num2 + 2] = mode;
-            map[num1 + 2][num2 + 1] = mode;
             map[num1 + 2][num2] = mode;
+            map[num1 + 2][num2 + 1] = mode;
+            map[num1 + 2][num2 + 2] = mode;
             map[num1 + 3][num2] = mode;
             map[num1 + 4][num2] = mode;
             map[num1 + 4][num2 + 1] = mode;
@@ -199,22 +217,22 @@ void makefig(char num1, char num2, char figure, char mode) {
             map[num1][num2 + 1] = mode;
             map[num1][num2 + 2] = mode;
             map[num1 + 1][num2 + 2] = mode;
-            map[num1 + 2][num2 + 2] = mode;
-            map[num1 + 2][num2 + 1] = mode;
             map[num1 + 2][num2] = mode;
+            map[num1 + 2][num2 + 1] = mode;
+            map[num1 + 2][num2 + 2] = mode;
             map[num1 + 3][num2 + 2] = mode;
-            map[num1 + 4][num2 + 2] = mode;
+            map[num1 + 4][num2] = mode;
             map[num1 + 4][num2 + 1] = mode;
-            map[num1 + 4][num2 ] = mode;
+            map[num1 + 4][num2 + 2] = mode;
             break;
         case 4:
             map[num1][num2] = mode;
             map[num1][num2 + 2] = mode;
             map[num1 + 1][num2] = mode;
             map[num1 + 1][num2 + 2] = mode;
-            map[num1 + 2][num2 + 2] = mode;
-            map[num1 + 2][num2 + 1] = mode;
             map[num1 + 2][num2] = mode;
+            map[num1 + 2][num2 + 1] = mode;
+            map[num1 + 2][num2 + 2] = mode;
             map[num1 + 3][num2 + 2] = mode;
             map[num1 + 4][num2 + 2] = mode;
             break;
@@ -223,9 +241,9 @@ void makefig(char num1, char num2, char figure, char mode) {
             map[num1][num2 + 1] = mode;
             map[num1][num2 + 2] = mode;
             map[num1 + 1][num2] = mode;
-            map[num1 + 2][num2 + 2] = mode;
-            map[num1 + 2][num2 + 1] = mode;
             map[num1 + 2][num2] = mode;
+            map[num1 + 2][num2 + 1] = mode;
+            map[num1 + 2][num2 + 2] = mode;
             map[num1 + 3][num2 + 2] = mode;
             map[num1 + 4][num2] = mode;
             map[num1 + 4][num2 + 1] = mode;
@@ -236,9 +254,9 @@ void makefig(char num1, char num2, char figure, char mode) {
             map[num1][num2 + 1] = mode;
             map[num1][num2 + 2] = mode;
             map[num1 + 1][num2] = mode;
-            map[num1 + 2][num2 + 2] = mode;
-            map[num1 + 2][num2 + 1] = mode;
             map[num1 + 2][num2] = mode;
+            map[num1 + 2][num2 + 1] = mode;
+            map[num1 + 2][num2 + 2] = mode;
             map[num1 + 3][num2] = mode;
             map[num1 + 3][num2 + 2] = mode;
             map[num1 + 4][num2] = mode;
@@ -249,9 +267,7 @@ void makefig(char num1, char num2, char figure, char mode) {
             map[num1][num2] = mode;
             map[num1][num2 + 1] = mode;
             map[num1][num2 + 2] = mode;
-            map[num1 + 1][num2] = mode;
             map[num1 + 1][num2 + 2] = mode;
-            map[num1 + 2][num2] = mode;
             map[num1 + 2][num2 + 2] = mode;
             map[num1 + 3][num2 + 2] = mode;
             map[num1 + 4][num2 + 2] = mode;
@@ -301,6 +317,150 @@ void makefig(char num1, char num2, char figure, char mode) {
             break;
     }
 }
+
+/*void mapcopy(char num1][ char num2) {
+    char datatempa = 0;
+    char datatemp = 0;
+    datatemp = Map(num1 + 7, num2, map[(num1 + 7) / 2 + 1][num2 / 2 + 1], 1);
+    datatempa = Map(num1 + 15, num2, map[(num1 + 15) / 2 + 1][num2 / 2 + 1], 1);
+    for (char i = 7; i > 0; i--) {
+        datatemp = datatemp * 2 + Map(num1 + i - 1, num2, map[(num1 + i - 1) / 2 + 1][num2 / 2 + 1], 1);
+        datatempa = datatempa * 2 + Map(num1 + i + 7, num2, map[(num1 + i + 7) / 2 + 1][num2 / 2 + 1], 1);
+    }
+
+    LATD = datatemp;
+    LATA = datatempa;
+}*/
+
+/*void makefig(char num1, char num2, char figure, char mode) {
+    switch (figure) {
+        case 1:
+            Map(num1, num2 + 1, mode, 0);
+            Map(num1 + 1, num2 + 1, mode, 0);
+            Map(num1 + 2, num2 + 1, mode, 0);
+            Map(num1 + 3, num2 + 1, mode, 0);
+            Map(num1 + 4, num2 + 1, mode, 0);
+            break;
+        case 2:
+            Map(num1, num2, mode, 0);
+            Map(num1, num2 + 1, mode, 0);
+            Map(num1, num2 + 2, mode, 0);
+            Map(num1 + 1, num2 + 2, mode, 0);
+            Map(num1 + 2, num2, mode, 0);
+            Map(num1 + 2, num2 + 1, mode, 0);
+            Map(num1 + 2, num2 + 2, mode, 0);
+            Map(num1 + 3, num2, mode, 0);
+            Map(num1 + 4, num2, mode, 0);
+            Map(num1 + 4, num2 + 1, mode, 0);
+            Map(num1 + 4, num2 + 2, mode, 0);
+            break;
+        case 3:
+            Map(num1, num2, mode, 0);
+            Map(num1, num2 + 1, mode, 0);
+            Map(num1, num2 + 2, mode, 0);
+            Map(num1 + 1, num2 + 2, mode, 0);
+            Map(num1 + 2, num2, mode, 0);
+            Map(num1 + 2, num2 + 1, mode, 0);
+            Map(num1 + 2, num2 + 2, mode, 0);
+            Map(num1 + 3, num2 + 2, mode, 0);
+            Map(num1 + 4, num2, mode, 0);
+            Map(num1 + 4, num2 + 1, mode, 0);
+            Map(num1 + 4, num2 + 2, mode, 0);
+            break;
+        case 4:
+            Map(num1, num2, mode, 0);
+            Map(num1, num2 + 2, mode, 0);
+            Map(num1 + 1, num2, mode, 0);
+            Map(num1 + 1, num2 + 2, mode, 0);
+            Map(num1 + 2, num2, mode, 0);
+            Map(num1 + 2, num2 + 1, mode, 0);
+            Map(num1 + 2, num2 + 2, mode, 0);
+            Map(num1 + 3, num2 + 2, mode, 0);
+            Map(num1 + 4, num2 + 2, mode, 0);
+            break;
+        case 5:
+            Map(num1, num2, mode, 0);
+            Map(num1, num2 + 1, mode, 0);
+            Map(num1, num2 + 2, mode, 0);
+            Map(num1 + 1, num2, mode, 0);
+            Map(num1 + 2, num2, mode, 0);
+            Map(num1 + 2, num2 + 1, mode, 0);
+            Map(num1 + 2, num2 + 2, mode, 0);
+            Map(num1 + 3, num2 + 2, mode, 0);
+            Map(num1 + 4, num2, mode, 0);
+            Map(num1 + 4, num2 + 1, mode, 0);
+            Map(num1 + 4, num2 + 2, mode, 0);
+            break;
+        case 6:
+            Map(num1, num2, mode, 0);
+            Map(num1, num2 + 1, mode, 0);
+            Map(num1, num2 + 2, mode, 0);
+            Map(num1 + 1, num2, mode, 0);
+            Map(num1 + 2, num2, mode, 0);
+            Map(num1 + 2, num2 + 1, mode, 0);
+            Map(num1 + 2, num2 + 2, mode, 0);
+            Map(num1 + 3, num2, mode, 0);
+            Map(num1 + 3, num2 + 2, mode, 0);
+            Map(num1 + 4, num2, mode, 0);
+            Map(num1 + 4, num2 + 1, mode, 0);
+            Map(num1 + 4, num2 + 2, mode, 0);
+            break;
+        case 7:
+            Map(num1, num2, mode, 0);
+            Map(num1, num2 + 1, mode, 0);
+            Map(num1, num2 + 2, mode, 0);
+            Map(num1 + 1, num2, mode, 0);
+            Map(num1 + 1, num2 + 2, mode, 0);
+            Map(num1 + 2, num2, mode, 0);
+            Map(num1 + 2, num2 + 2, mode, 0);
+            Map(num1 + 3, num2 + 2, mode, 0);
+            Map(num1 + 4, num2 + 2, mode, 0);
+            break;
+        case 8:
+            Map(num1, num2, mode, 0);
+            Map(num1, num2 + 1, mode, 0);
+            Map(num1, num2 + 2, mode, 0);
+            Map(num1 + 1, num2, mode, 0);
+            Map(num1 + 1, num2 + 2, mode, 0);
+            Map(num1 + 2, num2, mode, 0);
+            Map(num1 + 2, num2 + 1, mode, 0);
+            Map(num1 + 2, num2 + 2, mode, 0);
+            Map(num1 + 3, num2, mode, 0);
+            Map(num1 + 3, num2 + 2, mode, 0);
+            Map(num1 + 4, num2, mode, 0);
+            Map(num1 + 4, num2 + 1, mode, 0);
+            Map(num1 + 4, num2 + 2, mode, 0);
+            break;
+        case 9:
+            Map(num1, num2, mode, 0);
+            Map(num1, num2 + 1, mode, 0);
+            Map(num1, num2 + 2, mode, 0);
+            Map(num1 + 1, num2, mode, 0);
+            Map(num1 + 1, num2 + 2, mode, 0);
+            Map(num1 + 2, num2, mode, 0);
+            Map(num1 + 2, num2 + 1, mode, 0);
+            Map(num1 + 2, num2 + 2, mode, 0);
+            Map(num1 + 3, num2 + 2, mode, 0);
+            Map(num1 + 4, num2, mode, 0);
+            Map(num1 + 4, num2 + 1, mode, 0);
+            Map(num1 + 4, num2 + 2, mode, 0);
+            break;
+        case 0:
+            Map(num1, num2, mode, 0);
+            Map(num1, num2 + 1, mode, 0);
+            Map(num1, num2 + 2, mode, 0);
+            Map(num1 + 1, num2, mode, 0);
+            Map(num1 + 1, num2 + 2, mode, 0);
+            Map(num1 + 2, num2, mode, 0);
+            Map(num1 + 2, num2 + 2, mode, 0);
+            Map(num1 + 3, num2, mode, 0);
+            Map(num1 + 3, num2 + 2, mode, 0);
+            Map(num1 + 4, num2, mode, 0);
+            Map(num1 + 4, num2 + 1, mode, 0);
+            Map(num1 + 4, num2 + 2, mode, 0);
+            break;
+    }
+}/*
 
 /*
 void trans(char num) {
@@ -361,3 +521,18 @@ char data_moment[8][16] = {
     {0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };*/
+
+/*char Map(char num1, char num2, char num, char mode) {
+    if (mode == 1) {
+        char te = num;
+        if (num1 % 2 == 1 && num2 % 2 == 1)return te >> 6;
+        else if (num1 % 2 == 1 && num2 % 2 == 0)return (te % 64) >> 4;
+        else if (num1 % 2 == 0 && num2 % 2 == 1)return (te % 16) >> 2;
+        else if (num1 % 2 == 0 && num2 % 2 == 0)return te % 4;
+    } else {
+        if (num1 % 2 == 1 && num2 % 2 == 1)map[num1 / 2 + 1][num2 / 2 + 1] += num << 6;
+        else if (num1 % 2 == 1 && num2 % 2 == 0)map[num1 / 2 + 1][num2 / 2 + 1] += num << 4;
+        else if (num1 % 2 == 0 && num2 % 2 == 1)map[num1 / 2 + 1][num2 / 2 + 1] += num << 2;
+        else if (num1 % 2 == 0 && num2 % 2 == 0)map[num1 / 2 + 1][num2 / 2 + 1] += num;
+    }
+}*/
