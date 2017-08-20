@@ -122,16 +122,12 @@ int main(int argc, char** argv) {
     fz = 0;
 
     for (char i = 0; i < 27; i++)for (char j = 0; j < 27; j++)map[i][j] = 0;
-    for (char i = 0; i < 27; i++) {
-        map[i][0] = 17;
-        map[i][26] = 68;
-        map[0][i] = 5;
-        map[26][i] = 80;
+    for (char i = 0; i < 54; i++) {
+        Map(0, i, 1, 0);
+        Map(i, 0, 1, 0);
+        Map(53, i, 1, 0);
+        Map(i, 53, 1, 0);
     }
-    map[0][0] = 21;
-    map[26][26] = 84;
-    map[0][26] = 69;
-    map[26][0] = 85;
 
     int figure = 0;
 
@@ -202,7 +198,7 @@ void show(char num1, char num2) {
         LATE1 = 0;
         LATA = dataa / 256;
         LATD = dataa % 256;
-        if (i != 15)dataa = mapcopy(num1, num2 + i + 1);
+        dataa = mapcopy(num1, num2 + i + 1);
         __delay_us(50);
     }
 }
@@ -213,11 +209,13 @@ int mapcopy(char num1, char num2) {
     datatemp = Map(num1 + 7, num2, map[(num1 + 7) / 2 ][num2 / 2 ], 1);
     datatempa = Map(num1 + 15, num2, map[(num1 + 15) / 2 ][num2 / 2 ], 1);
     for (char i = 7; i > 0; i--) {
-        datatemp = datatemp * 2 + Map(num1 + i - 1, num2, map[(num1 + i - 1) / 2][num2 / 2], 1);
-        datatempa = datatempa * 2 + Map(num1 + i + 7, num2, map[(num1 + i + 7) / 2][num2 / 2], 1);
+        if (Map(num1 + i - 1, num2, map[(num1 + i - 1) / 2][num2 / 2], 1) != 0)datatemp = datatemp * 2 + 1;
+        else datatemp *= 2;
+        if (Map(num1 + i + 7, num2, map[(num1 + i + 7) / 2][num2 / 2], 1) != 0)datatempa = datatempa * 2 + 1;
+        else datatempa *= 2;
     }
 
-    return datatempa *256 + datatemp;
+    return datatempa * 256 + datatemp;
 }
 
 void mapcopy1(char num1, char num2) {
@@ -566,14 +564,14 @@ char data_moment[8][16] = {
 char Map(char num1, char num2, char num, char mode) {
     if (mode == 1) {
         char te = num;
-        if (num1 % 2 == 1 && num2 % 2 == 1)return te >> 6;
-        else if (num1 % 2 == 1 && num2 % 2 == 0)return (te % 64) >> 4;
-        else if (num1 % 2 == 0 && num2 % 2 == 1)return (te % 16) >> 2;
+        if (num1 % 2 == 1 && num2 % 2 == 1)return te / 64;
+        else if (num1 % 2 == 1 && num2 % 2 == 0)return (te % 64) / 16;
+        else if (num1 % 2 == 0 && num2 % 2 == 1)return (te % 16) / 4;
         else if (num1 % 2 == 0 && num2 % 2 == 0)return te % 4;
     } else {
-        if (num1 % 2 == 1 && num2 % 2 == 1)map[num1 / 2 + 1][num2 / 2 + 1] += num << 6;
-        else if (num1 % 2 == 1 && num2 % 2 == 0)map[num1 / 2 + 1][num2 / 2 + 1] += num << 4;
-        else if (num1 % 2 == 0 && num2 % 2 == 1)map[num1 / 2 + 1][num2 / 2 + 1] += num << 2;
-        else if (num1 % 2 == 0 && num2 % 2 == 0)map[num1 / 2 + 1][num2 / 2 + 1] += num;
+        if (num1 % 2 == 1 && num2 % 2 == 1)map[num1 / 2][num2 / 2 ] += num * 64;
+        else if (num1 % 2 == 1 && num2 % 2 == 0)map[num1 / 2 ][num2 / 2] += num * 16;
+        else if (num1 % 2 == 0 && num2 % 2 == 1)map[num1 / 2][num2 / 2] += num * 4;
+        else if (num1 % 2 == 0 && num2 % 2 == 0)map[num1 / 2 ][num2 / 2 ] += num;
     }
 }
