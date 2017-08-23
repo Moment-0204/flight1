@@ -46,6 +46,7 @@
 
 
 int Xangle, Yangle, Zangle;
+char datatemp, datatempa;
 
 void accele() {
     int x1, y1, z1, x2, y2, z2, x, y, z;
@@ -71,14 +72,18 @@ void accele() {
 
 char map[27][27];
 
+
+void scope(char, char, char);
 void show(char, char);
 void setup();
 //void mapcopy(char, char);
 //void trans(char);
 void makefig(char, char, char, char);
+void makefig1(char, char, char, char);
 void posh(char, char, int, char);
 char Map(char, char, char, char);
-int mapcopy(char, char);
+void mapcopy(char, char);
+void mapcopy1(char, char);
 
 /*
  * 
@@ -87,6 +92,7 @@ int mapcopy(char, char);
 char di = 0, dj = 0;
 int fx, fz;
 int m;
+char pi = 0, pj = 0;
 
 void interrupt intertimer() {
     if (SSPIF == 1) {
@@ -98,11 +104,14 @@ void interrupt intertimer() {
         m = (m + 1) % 5;
         if (m == 0) {
             char th = 40;
-            if (Xangle > fx - th && di != 0)di--;
-            else if (Xangle < fx + th && di != 38)di++;
-            if (Zangle > fz - th && dj != 38)dj++;
+            scope(di, dj, 0);
+            if (Xangle > fx - th && di != 0) di--;
+            else if (Xangle < fx + th && di != 17)di++;
+            if (Zangle > fz - th && dj != 21)dj++;
             else if (Zangle < fz + th && dj != 0)dj--;
+            scope(di, dj, 1);
         }
+        TMR0 = 0;
         T0IF = 0;
     }
 }
@@ -121,13 +130,13 @@ int main(int argc, char** argv) {
     fx = 0;
     fz = 0;
 
-    for (char i = 0; i < 27; i++)for (char j = 0; j < 27; j++)map[i][j] = 0;
-    for (char i = 0; i < 54; i++) {
+    for (char i = 0; i < 27; i++) for (char j = 0; j < 27; j++)map[i][j] = 0;
+    /*for (char i = 0; i < 54; i++) {
         Map(0, i, 1, 0);
         Map(i, 0, 1, 0);
         Map(53, i, 1, 0);
         Map(i, 53, 1, 0);
-    }
+    }*/
 
     int figure = 0;
 
@@ -136,14 +145,20 @@ int main(int argc, char** argv) {
     int prexangle = 0;
 
 
-    makefig(7, 7, 8, 1);
-    makefig(46, 46, 3, 1);
 
     while (1) {
+        makefig1(7, 7, 8, 1);
+        makefig1(22, 16, 3, 1);
         count = (count + 1) % 10;
         if (count == 0)accele();
         int wait = 1;
         show(di, dj);
+        for (char i = 0; i < 27; i++) {
+            map[i][0] = 1;
+            map[i][26] = 1;
+            map[0][i] = 1;
+            map[22][i] = 1;
+        }
     }
     return 1;
 }
@@ -168,7 +183,7 @@ void show1(char num1, char num2) {
     mapcopy(num1, num2);
     __delay_us(300);
     LATE2 = 1;
-    for (char i = 1; i < 27; i++) {
+    for (char i = 1; i < 16; i++) {
         LATD = 0x00;
         LATA = 0x00;
         LATE1 = 1;
@@ -179,57 +194,100 @@ void show1(char num1, char num2) {
 }
 
 void show(char num1, char num2) {
-    int dataa;
     LATD = 0x00;
     LATA = 0x00;
     LATE2 = 0;
     LATE1 = 1;
     LATE1 = 0;
-    dataa = mapcopy(num1, num2);
-    LATA = dataa / 256;
-    LATD = dataa % 256;
-    __delay_us(50);
+    mapcopy1(num1, num2);
+    LATA = datatempa;
+    LATD = datatemp;
+    //__delay_ms(1);
+    //__delay_us(10);
     LATE2 = 1;
-    dataa = mapcopy(num1, num2 + 1);
+    mapcopy1(num1, num2 + 1);
     for (char i = 1; i < 16; i++) {
         LATD = 0x00;
         LATA = 0x00;
         LATE1 = 1;
         LATE1 = 0;
-        LATA = dataa / 256;
-        LATD = dataa % 256;
-        dataa = mapcopy(num1, num2 + i + 1);
-        __delay_us(50);
+        LATA = datatempa;
+        LATD = datatemp;
+        mapcopy1(num1, num2 + i + 1);
+        //    __delay_ms(1);
+        //__delay_us(10);
     }
+    return;
 }
 
-int mapcopy(char num1, char num2) {
-    char datatempa = 0;
-    char datatemp = 0;
-    datatemp = Map(num1 + 7, num2, map[(num1 + 7) / 2 ][num2 / 2 ], 1);
-    datatempa = Map(num1 + 15, num2, map[(num1 + 15) / 2 ][num2 / 2 ], 1);
+void mapcopy(char num1, char num2) {
+    datatempa = 0;
+    datatemp = 0;
+    if (Map(num1 + 7, num2, map[(num1 + 7) / 2 ][num2 / 2 ], 1) != 0)datatemp = 1;
+    if (Map(num1 + 15, num2, map[(num1 + 15) / 2 ][num2 / 2 ], 1) != 0)datatempa = 1;
     for (char i = 7; i > 0; i--) {
-        if (Map(num1 + i - 1, num2, map[(num1 + i - 1) / 2][num2 / 2], 1) != 0)datatemp = datatemp * 2 + 1;
-        else datatemp *= 2;
-        if (Map(num1 + i + 7, num2, map[(num1 + i + 7) / 2][num2 / 2], 1) != 0)datatempa = datatempa * 2 + 1;
-        else datatempa *= 2;
+        datatemp *= 2;
+        datatempa *= 2;
+        if (Map(num1 + i - 1, num2, map[(num1 + i - 1) / 2][num2 / 2], 1) != 0)datatemp += 1;
+        if (Map(num1 + i + 7, num2, map[(num1 + i + 7) / 2][num2 / 2], 1) != 0)datatempa += 1;
     }
-
-    return datatempa * 256 + datatemp;
+    return;
 }
+
+/*
+   0000000000111111111122222222223333333
+   0123456789012345678901234567890123456
+ 00
+ 01
+ 02
+ 03
+ 04
+ 05     111111111111111111111111111
+ 06
+ 07
+ 08
+ 09
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ */
 
 void mapcopy1(char num1, char num2) {
-    char datatempa = 0;
-    char datatemp = 0;
-    datatemp = map[num1 + 7][num2];
-    datatempa = map[num1 + 15][num2];
+    datatempa = 0;
+    datatemp = 0;
+    if (num2 < 5 || num2 > 31)return;
+    datatemp = map[num1 + 2][num2 - 5];
+    if (num1 > 16)datatempa = 0;
+    else datatempa = map[num1 + 10][num2 - 5];
     for (char i = 7; i > 0; i--) {
-        datatemp = datatemp * 2 + map[num1 + i - 1][num2];
-        datatempa = datatempa * 2 + map[num1 + i + 7][num2];
+        if (num1 + i - 6 > 26 || num1 + i - 6 < 0) {
+            datatempa *= 2;
+            datatemp *= 2;
+        } else if (num1 + i + 2 > 26 || num1 + i + 2 < 0) {
+            datatempa *= 2;
+            datatemp = datatemp * 2 + map[num1 + 1 - 6][num2 - 5];
+        } else {
+            datatemp = datatemp * 2 + map[num1 + i - 6][num2 - 5];
+            datatempa = datatempa * 2 + map[num1 + i + 2][num2 - 5];
+        }
     }
-
-    LATD = datatemp;
-    LATA = datatempa;
+    return;
 }
 
 void posh(char num1, char num2, int point, char mode) {
@@ -237,6 +295,38 @@ void posh(char num1, char num2, int point, char mode) {
     if (point > 99)makefig(num1, num2, point / 100, mode);
     if (point > 9)makefig(num1, num2 + 4, (point % 100) / 10, mode);
     makefig(num1, num2 + 8, point % 10, mode);
+}
+
+void scope(char num1, char num2, char mode) {
+    map[num1 + 0][num2] = mode;
+    map[num1 + 0][num2 + 1] = mode;
+    map[num1 + 0][num2 + 4] = mode;
+    map[num1 + 0][num2 + 5] = mode;
+    map[num1 + 1][num2 + 0] = mode;
+    map[num1 + 1][num2 + 5] = mode;
+    map[num1 + 5][num2] = mode;
+    map[num1 + 5][num2 + 1] = mode;
+    map[num1 + 5][num2 + 4] = mode;
+    map[num1 + 5][num2 + 5] = mode;
+    map[num1 + 4][num2] = mode;
+    map[num1 + 4][num2 + 5] = mode;
+    return;
+}
+
+void scope1(char num1, char num2, char mode) {
+    Map(num1 + 5, num2 + 6, mode, 0);
+    Map(num1 + 6, num2 + 6, mode, 0);
+    Map(num1 + 6, num2 + 5, mode, 0);
+    Map(num1 + 5, num2 + 9, mode, 0);
+    Map(num1 + 6, num2 + 9, mode, 0);
+    Map(num1 + 6, num2 + 10, mode, 0);
+    Map(num1 + 9, num2 + 5, mode, 0);
+    Map(num1 + 9, num2 + 6, mode, 0);
+    Map(num1 + 9, num2 + 9, mode, 0);
+    Map(num1 + 9, num2 + 10, mode, 0);
+    Map(num1 + 10, num2 + 6, mode, 0);
+    Map(num1 + 10, num2 + 9, mode, 0);
+    return;
 }
 
 void makefig1(char num1, char num2, char figure, char mode) {
@@ -574,4 +664,5 @@ char Map(char num1, char num2, char num, char mode) {
         else if (num1 % 2 == 0 && num2 % 2 == 1)map[num1 / 2][num2 / 2] += num * 4;
         else if (num1 % 2 == 0 && num2 % 2 == 0)map[num1 / 2 ][num2 / 2 ] += num;
     }
+    return;
 }
